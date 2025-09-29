@@ -22,7 +22,7 @@ func Init(w, h int32) *Game {
 	m := mapgen.CreateMap(40, 60)
 	sX, sY := float32(m.StartingPoint.X), float32(m.StartingPoint.Y)
 
-	tiles, err := assets.Tileset()
+	tiles, err := assets.TilesetRaw()
 	if err != nil {
 		return nil
 	}

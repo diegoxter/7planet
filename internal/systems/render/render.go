@@ -3,17 +3,11 @@ package render
 import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 
-	"github.com/diegoxter/7planet/internal/assets"
 	"github.com/diegoxter/7planet/internal/systems/entities"
 )
 
-type Offset struct {
-	X, Y int32
-}
-
 type Render struct {
 	ScreenWidth, ScreenHeight int32
-	Offset                    Offset
 	Tileset                   *rl.Image
 }
 
@@ -33,13 +27,6 @@ func (r *Render) Unload() {
 }
 
 func (r *Render) Init(lW, lH int32) {
-	mapPixelW := lW * assets.DrawSize
-	mapPixelH := lH * assets.DrawSize
-
-	r.Offset = Offset{
-		X: (r.ScreenWidth - mapPixelW) / 2,
-		Y: (r.ScreenHeight - mapPixelH) / 2,
-	}
 }
 
 func (r *Render) Render(t *rl.Texture2D, p *entities.Player) {
