@@ -18,14 +18,12 @@ type Render struct {
 }
 
 func (r *Render) renderPlayer(p *entities.Player) {
-	p.Data.RenderSelf(r.Offset.X, r.Offset.Y)
+	p.Data.RenderSelf()
 }
 
 func (r *Render) renderRoom(t *rl.Texture2D) {
 	rl.DrawTexture(
-		*t,
-		r.ScreenWidth/2-t.Width/2,
-		r.ScreenHeight/2-t.Height/2,
+		*t, 0, 0,
 		rl.White,
 	)
 }

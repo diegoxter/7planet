@@ -30,9 +30,9 @@ func (e *Entity) Move(dX, dY float32, maxX, maxY int) {
 	}
 }
 
-func (e *Entity) RenderSelf(mapOffsetX, mapOffsetY int32) {
-	pixelX := mapOffsetX + int32(e.Position.X)*assets.DrawSize
-	pixelY := mapOffsetY + int32(e.Position.Y)*assets.DrawSize
+func (e *Entity) RenderSelf() {
+	pixelX := int32(e.Position.X) * assets.DrawSize
+	pixelY := int32(e.Position.Y) * assets.DrawSize
 
 	// TODO temporary solution, player sprite to be set
 	rl.DrawRectangle(int32(pixelX), int32(pixelY), assets.DrawSize, assets.DrawSize, rl.Red)

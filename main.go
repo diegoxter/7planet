@@ -8,7 +8,7 @@ import (
 
 func main() {
 	screenWidth := int32(800)
-	screenHeight := int32(600)
+	screenHeight := int32(640)
 
 	rl.InitWindow(screenWidth, screenHeight, "7th Planet (alpha)")
 	defer rl.CloseWindow()
@@ -24,8 +24,6 @@ func main() {
 		rl.BeginMode2D(*g.Camera)
 		g.Run()
 		rl.EndMode2D()
-
-		rl.DrawText("this IS a texture loaded from an image!", 300, 370, 10, rl.Gray)
 
 		rl.EndDrawing()
 	}

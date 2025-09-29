@@ -7,10 +7,8 @@ import (
 )
 
 var (
-	DrawSize = int32(26)
-
-	TileSize = int32(32)
-
+	TileSize   = int32(32)
+	DrawSize   = TileSize
 	TileCoords = map[int32]rl.Vector2{
 		' ': {X: float32(TileSize * 2), Y: float32(TileSize * 2)}, // espacio ' ' → suelo
 		'#': {X: float32(TileSize * 2), Y: float32(TileSize)},     // 'x' → pared

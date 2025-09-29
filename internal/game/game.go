@@ -19,7 +19,7 @@ type Game struct {
 }
 
 func Init(w, h int32) *Game {
-	m := mapgen.CreateMap(20, 40)
+	m := mapgen.CreateMap(40, 60)
 	sX, sY := float32(m.StartingPoint.X), float32(m.StartingPoint.Y)
 
 	tiles, err := assets.Tileset()
@@ -103,27 +103,24 @@ func (g *Game) updateCameraForRoom() {
 	if room == nil {
 		return
 	}
+
 	drawSize := float32(assets.DrawSize)
-	centerX := (float32(room.X) + float32(room.W)/2) * drawSize
-	centerY := (float32(room.Y-int(drawSize/4)) + float32(room.H-int(drawSize/5))/2) * drawSize
+	worldCenterX := (float32(room.X) + float32(room.W)/2) * drawSize
+	worldCenterY := (float32(room.Y) + float32(room.H)/2) * drawSize
 
 	lerp := func(a, b, t float32) float32 { return a + (b-a)*t }
-	g.Camera.Target.X = lerp(g.Camera.Target.X, centerX, 0.1)
-	g.Camera.Target.Y = lerp(g.Camera.Target.Y, centerY, 0.1)
+	g.Camera.Target.X = lerp(g.Camera.Target.X, worldCenterX, 0.1)
+	g.Camera.Target.Y = lerp(g.Camera.Target.Y, worldCenterY, 0.1)
 
-	maxZoom := float32(1.0)
-	zoomX := float32(g.W) / (float32(room.W) * drawSize)
-	zoomY := float32(g.H) / (float32(room.H) * drawSize)
-	zoom := zoomX
-	if zoomY < zoomX {
-		zoom = zoomY
-	}
-	if zoom > maxZoom {
-		zoom = maxZoom
-	}
+	targetCoverage := float32(0.8)
+
+	zoomX := (float32(g.W) * targetCoverage) / (float32(room.W) * drawSize)
+	zoomY := (float32(g.H) * targetCoverage) / (float32(room.H) * drawSize)
+
+	zoom := min(zoomX, zoomY)
+	zoom = min(max(zoom, 0.3), 3.0)
 
 	g.Camera.Zoom = lerp(g.Camera.Zoom, zoom, 0.1)
-
 	g.Camera.Offset = rl.NewVector2(float32(g.W)/2, float32(g.H)/2)
 }
 
