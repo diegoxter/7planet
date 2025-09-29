@@ -18,7 +18,7 @@ type Map struct {
 	Texture       *rl.Texture2D
 }
 
-func CreateMap(w, h int) *Map {
+func CreateMap(w, h, s int) *Map {
 	var GameMap Map
 
 	GameMap.Layout = dngn.NewLayout(w, h)
@@ -26,7 +26,7 @@ func CreateMap(w, h int) *Map {
 	GameMap.Rooms = GameMap.Layout.GenerateBSP(
 		dngn.BSPOptions{
 			WallValue:       'x',
-			SplitCount:      5,
+			SplitCount:      s,
 			DoorValue:       '#',
 			MinimumRoomSize: 6,
 		},

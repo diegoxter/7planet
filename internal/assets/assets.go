@@ -10,14 +10,23 @@ var (
 	TileSize   = int32(32)
 	DrawSize   = TileSize
 	TileCoords = map[int32]rl.Vector2{
-		' ': {X: float32(TileSize * 2), Y: float32(TileSize * 2)}, // espacio ' ' → suelo
-		'#': {X: float32(TileSize * 2), Y: float32(TileSize)},     // 'x' → pared
-		'x': {X: float32(TileSize), Y: 0},                         // '#' → puerta
+		' ': {X: float32(TileSize), Y: float32(TileSize)},     // ' ' → floor
+		'#': {X: float32(TileSize * 2), Y: float32(TileSize)}, // 'x' → H Wall
+		'x': {X: float32(TileSize), Y: 0},                     // '#' → door
 	}
 )
 
 func TilesetRaw() (*rl.Image, error) {
 	t, err := LoadImage("internal/assets/png/tileset_complete.png")
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
+}
+
+func PlayerTexture() (*rl.Texture2D, error) {
+	t, err := LoadTexture("internal/assets/png/player.png")
 	if err != nil {
 		return nil, err
 	}

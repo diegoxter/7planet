@@ -19,7 +19,7 @@ type Game struct {
 }
 
 func Init(w, h int32) *Game {
-	m := mapgen.CreateMap(40, 60)
+	m := mapgen.CreateMap(40, 80, 12)
 	sX, sY := float32(m.StartingPoint.X), float32(m.StartingPoint.Y)
 
 	tiles, err := assets.TilesetRaw()
@@ -35,13 +35,18 @@ func Init(w, h int32) *Game {
 	r.Init(int32(m.Layout.Width), int32(m.Layout.Height))
 
 	m.Texture = mapgen.LayoutToTexture2D(m.Layout, r.Tileset)
+	p, err := assets.PlayerTexture()
+	if err != nil {
+		return nil
+	}
 
 	game := &Game{
 		W: w,
 		H: h,
 		Player: &entities.Player{
 			Data: entities.Entity{
-				Position: entities.Position{X: sX, Y: sY},
+				Sprite:   *entities.NewSprite(p, 3, 8, 8),
+				Position: rl.NewVector2(sX, sY),
 				HP:       100,
 			},
 		},
@@ -67,17 +72,26 @@ func (g *Game) Unload() {
 
 func (g *Game) handleInput() {
 	if rl.IsKeyDown(rl.KeyRight) {
-		g.Player.Data.Move(0.2, 0, g.Map.Layout.Width, g.Map.Layout.Height)
+		g.Player.Data.Sprite.Direction = entities.East
+		g.Player.Data.Move(0.09, 0, g.Map.Layout.Width, g.Map.Layout.Height)
 	}
 	if rl.IsKeyDown(rl.KeyLeft) {
-		g.Player.Data.Move(-0.2, 0, g.Map.Layout.Width, g.Map.Layout.Height)
+		g.Player.Data.Sprite.Direction = entities.West
+		g.Player.Data.Move(-0.09, 0, g.Map.Layout.Width, g.Map.Layout.Height)
 	}
 	if rl.IsKeyDown(rl.KeyDown) {
-		g.Player.Data.Move(0, 0.2, g.Map.Layout.Width, g.Map.Layout.Height)
+		g.Player.Data.Sprite.Direction = entities.North
+		g.Player.Data.Move(0, 0.09, g.Map.Layout.Width, g.Map.Layout.Height)
 	}
 
 	if rl.IsKeyDown(rl.KeyUp) {
-		g.Player.Data.Move(0, -0.2, g.Map.Layout.Width, g.Map.Layout.Height)
+		g.Player.Data.Sprite.Direction = entities.South
+		g.Player.Data.Move(0, -0.09, g.Map.Layout.Width, g.Map.Layout.Height)
+	}
+
+	if rl.IsKeyReleased(rl.KeyRight) || rl.IsKeyReleased(rl.KeyLeft) ||
+		rl.IsKeyReleased(rl.KeyUp) || rl.IsKeyReleased(rl.KeyDown) {
+		g.Player.Data.Sprite.Moving = false
 	}
 }
 
@@ -87,10 +101,10 @@ func (g *Game) render() {
 
 func (g *Game) currentRoom() *dngn.BSPRoom {
 	for _, r := range g.Map.Rooms {
-		if g.Player.Data.Position.X >= float32(r.X) &&
-			g.Player.Data.Position.X < float32(r.X+r.W) &&
-			g.Player.Data.Position.Y >= float32(r.Y) &&
-			g.Player.Data.Position.Y < float32(r.Y+r.H) {
+		if g.Player.Data.Position.X >= float32(r.X-1) &&
+			g.Player.Data.Position.X <= float32(r.X+r.W) &&
+			g.Player.Data.Position.Y >= float32(r.Y-1) &&
+			g.Player.Data.Position.Y <= float32(r.Y+r.H) {
 			return r
 		}
 	}
