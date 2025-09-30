@@ -43,13 +43,9 @@ type Sprite struct {
 }
 
 type Entity struct {
-	ID, HP   int
+	ID       int
 	Sprite   Sprite
 	Position rl.Vector2
-}
-
-type Player struct {
-	Data Entity
 }
 
 func NewSprite(p *rl.Texture2D, sC, sR float32, fS int) *Sprite {
@@ -68,12 +64,8 @@ func NewSprite(p *rl.Texture2D, sC, sR float32, fS int) *Sprite {
 	}
 }
 
-func (e *Entity) Move(dX, dY float32, maxX, maxY int) {
+func (e *Entity) Move(newX, newY float32, maxX, maxY int) {
 	e.Sprite.Moving = true
-	pX := &e.Position.X
-	pY := &e.Position.Y
-	newX := *pX + dX
-	newY := *pY + dY
 
 	margin := float32(-0.28)
 	leftOK := newX >= 0+margin
@@ -82,8 +74,8 @@ func (e *Entity) Move(dX, dY float32, maxX, maxY int) {
 	bottomOK := newY <= float32(maxY-1)-(0.48)
 
 	if leftOK && rightOK && topOK && bottomOK {
-		*pX = newX
-		*pY = newY
+		e.Position.X = newX
+		e.Position.Y = newY
 	}
 }
 
@@ -124,11 +116,17 @@ func (e *Entity) RenderSelf() {
 	}
 
 	e.updateFrameCounter()
+
 	pixelX := e.Position.X * float32(assets.DrawSize)
 	pixelY := e.Position.Y * float32(assets.DrawSize)
-	position := rl.NewVector2(pixelX, pixelY)
-	frameRec := e.Sprite.FrameRec
 
+	// offset para ajustar el sprite respecto al tile
+	offsetX := float32(0)  // si el sprite está centrado, no tocamos X
+	offsetY := float32(-8) // este valor depende del tamaño del frame
+
+	position := rl.NewVector2(pixelX+offsetX, pixelY+offsetY)
+
+	frameRec := e.Sprite.FrameRec
 	if e.Sprite.Direction == West {
 		frameRec.Width = -frameRec.Width
 	}
@@ -139,12 +137,18 @@ func (e *Entity) RenderSelf() {
 		position,
 		rl.White,
 	)
-	//
-	// rl.DrawRectangleLines(
-	// 	int32(position.X),
-	// 	int32(position.Y),
-	// 	int32(math.Abs(float64(frameRec.Width))),
-	// 	int32(frameRec.Height),
-	// 	rl.Red,
-	// )
+
+	// Debug: tile box
+	rl.DrawRectangleLines(
+		int32(pixelX),
+		int32(pixelY),
+		int32(assets.DrawSize),
+		int32(assets.DrawSize),
+		rl.Green,
+	)
+
+	// Debug: centro del tile
+	centerX := int32(pixelX) + int32(assets.DrawSize/2)
+	centerY := int32(pixelY) + int32(assets.DrawSize/2)
+	rl.DrawCircle(centerX, centerY, 3, rl.Red)
 }

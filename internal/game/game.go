@@ -1,6 +1,8 @@
 package game
 
 import (
+	"math"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/solarlune/dngn"
 
@@ -19,7 +21,7 @@ type Game struct {
 }
 
 func Init(w, h int32) *Game {
-	m := mapgen.CreateMap(40, 80, 12)
+	m := mapgen.CreateMap(40, 40, 12)
 	sX, sY := float32(m.StartingPoint.X), float32(m.StartingPoint.Y)
 
 	tiles, err := assets.TilesetRaw()
@@ -47,8 +49,8 @@ func Init(w, h int32) *Game {
 			Data: entities.Entity{
 				Sprite:   *entities.NewSprite(p, 3, 8, 8),
 				Position: rl.NewVector2(sX, sY),
-				HP:       100,
 			},
+			HP: 100,
 		},
 		Renderer: r,
 		Map:      m,
@@ -73,20 +75,20 @@ func (g *Game) Unload() {
 func (g *Game) handleInput() {
 	if rl.IsKeyDown(rl.KeyRight) {
 		g.Player.Data.Sprite.Direction = entities.East
-		g.Player.Data.Move(0.09, 0, g.Map.Layout.Width, g.Map.Layout.Height)
+		g.Player.Move(0.1, 0, g.Map.Layout.Width, g.Map.Layout.Height, g.Map.Layout)
 	}
 	if rl.IsKeyDown(rl.KeyLeft) {
 		g.Player.Data.Sprite.Direction = entities.West
-		g.Player.Data.Move(-0.09, 0, g.Map.Layout.Width, g.Map.Layout.Height)
+		g.Player.Move(-0.1, 0, g.Map.Layout.Width, g.Map.Layout.Height, g.Map.Layout)
 	}
 	if rl.IsKeyDown(rl.KeyDown) {
 		g.Player.Data.Sprite.Direction = entities.North
-		g.Player.Data.Move(0, 0.09, g.Map.Layout.Width, g.Map.Layout.Height)
+		g.Player.Move(0, 0.1, g.Map.Layout.Width, g.Map.Layout.Height, g.Map.Layout)
 	}
 
 	if rl.IsKeyDown(rl.KeyUp) {
 		g.Player.Data.Sprite.Direction = entities.South
-		g.Player.Data.Move(0, -0.09, g.Map.Layout.Width, g.Map.Layout.Height)
+		g.Player.Move(0, -0.1, g.Map.Layout.Width, g.Map.Layout.Height, g.Map.Layout)
 	}
 
 	if rl.IsKeyReleased(rl.KeyRight) || rl.IsKeyReleased(rl.KeyLeft) ||
@@ -100,6 +102,15 @@ func (g *Game) render() {
 }
 
 func (g *Game) currentRoom() *dngn.BSPRoom {
+	t := g.Map.Layout.Get(
+		int(math.Ceil(float64(g.Player.Data.Position.X))),
+		int(math.Ceil(float64(g.Player.Data.Position.Y))),
+	)
+
+	if t == 120 || t == 35 {
+		return nil
+	}
+
 	for _, r := range g.Map.Rooms {
 		if g.Player.Data.Position.X >= float32(r.X-1) &&
 			g.Player.Data.Position.X <= float32(r.X+r.W) &&
