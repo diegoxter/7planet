@@ -12,10 +12,16 @@ import (
 	"github.com/diegoxter/7planet/internal/systems/render"
 )
 
+type MapData struct {
+	Map   *mapgen.Map
+	Mobs  []*entities.Mob
+	Items []*entities.Item
+}
+
 type Game struct {
 	Renderer *render.Render
 	W, H     int32
-	Map      *mapgen.Map
+	MapData  *MapData
 	Camera   *rl.Camera2D
 	Player   *entities.Player
 }
@@ -42,6 +48,13 @@ func Init(w, h int32) *Game {
 		return nil
 	}
 
+	mobs := []*entities.Mob{}
+	for len(mobs) < 5 {
+		mob := entities.GenerateMob(1, m.StartingRoom, m.Layout)
+		if mob != nil {
+			mobs = append(mobs, mob)
+		}
+	}
 	game := &Game{
 		W: w,
 		H: h,
@@ -53,8 +66,11 @@ func Init(w, h int32) *Game {
 			HP: 100,
 		},
 		Renderer: r,
-		Map:      m,
-		Camera:   &rl.Camera2D{},
+		MapData: &MapData{
+			Map:  m,
+			Mobs: mobs,
+		},
+		Camera: &rl.Camera2D{},
 	}
 
 	game.Camera.Target = rl.NewVector2(
@@ -75,20 +91,44 @@ func (g *Game) Unload() {
 func (g *Game) handleInput() {
 	if rl.IsKeyDown(rl.KeyRight) {
 		g.Player.Data.Sprite.Direction = entities.East
-		g.Player.Move(0.1, 0, g.Map.Layout.Width, g.Map.Layout.Height, g.Map.Layout)
+		g.Player.Move(
+			0.1,
+			0,
+			g.MapData.Map.Layout.Width,
+			g.MapData.Map.Layout.Height,
+			g.MapData.Map.Layout,
+		)
 	}
 	if rl.IsKeyDown(rl.KeyLeft) {
 		g.Player.Data.Sprite.Direction = entities.West
-		g.Player.Move(-0.1, 0, g.Map.Layout.Width, g.Map.Layout.Height, g.Map.Layout)
+		g.Player.Move(
+			-0.1,
+			0,
+			g.MapData.Map.Layout.Width,
+			g.MapData.Map.Layout.Height,
+			g.MapData.Map.Layout,
+		)
 	}
 	if rl.IsKeyDown(rl.KeyDown) {
 		g.Player.Data.Sprite.Direction = entities.North
-		g.Player.Move(0, 0.1, g.Map.Layout.Width, g.Map.Layout.Height, g.Map.Layout)
+		g.Player.Move(
+			0,
+			0.1,
+			g.MapData.Map.Layout.Width,
+			g.MapData.Map.Layout.Height,
+			g.MapData.Map.Layout,
+		)
 	}
 
 	if rl.IsKeyDown(rl.KeyUp) {
 		g.Player.Data.Sprite.Direction = entities.South
-		g.Player.Move(0, -0.1, g.Map.Layout.Width, g.Map.Layout.Height, g.Map.Layout)
+		g.Player.Move(
+			0,
+			-0.1,
+			g.MapData.Map.Layout.Width,
+			g.MapData.Map.Layout.Height,
+			g.MapData.Map.Layout,
+		)
 	}
 
 	if rl.IsKeyReleased(rl.KeyRight) || rl.IsKeyReleased(rl.KeyLeft) ||
@@ -98,11 +138,13 @@ func (g *Game) handleInput() {
 }
 
 func (g *Game) render() {
-	g.Renderer.Render(g.Map.Texture, g.Player)
+	g.updateCameraForRoom()
+
+	g.Renderer.Render(g.MapData.Map.Texture, g.Player, g.MapData.Mobs)
 }
 
 func (g *Game) currentRoom() *dngn.BSPRoom {
-	t := g.Map.Layout.Get(
+	t := g.MapData.Map.Layout.Get(
 		int(math.Ceil(float64(g.Player.Data.Position.X))),
 		int(math.Ceil(float64(g.Player.Data.Position.Y))),
 	)
@@ -111,7 +153,7 @@ func (g *Game) currentRoom() *dngn.BSPRoom {
 		return nil
 	}
 
-	for _, r := range g.Map.Rooms {
+	for _, r := range g.MapData.Map.Rooms {
 		if g.Player.Data.Position.X >= float32(r.X-1) &&
 			g.Player.Data.Position.X <= float32(r.X+r.W) &&
 			g.Player.Data.Position.Y >= float32(r.Y-1) &&
@@ -151,6 +193,6 @@ func (g *Game) updateCameraForRoom() {
 
 func (g *Game) Run() {
 	g.handleInput()
-	g.updateCameraForRoom()
+
 	g.render()
 }

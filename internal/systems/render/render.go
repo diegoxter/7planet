@@ -11,11 +11,17 @@ type Render struct {
 	Tileset                   *rl.Image
 }
 
-func (r *Render) renderPlayer(p *entities.Player) {
+func renderPlayer(p *entities.Player) {
 	p.Data.RenderSelf()
 }
 
-func (r *Render) renderRoom(t *rl.Texture2D) {
+func renderMobs(ms []*entities.Mob) {
+	for _, m := range ms {
+		m.Data.RenderSelf()
+	}
+}
+
+func renderRoom(t *rl.Texture2D) {
 	rl.DrawTexture(
 		*t, 0, 0,
 		rl.White,
@@ -29,7 +35,8 @@ func (r *Render) Unload() {
 func (r *Render) Init(lW, lH int32) {
 }
 
-func (r *Render) Render(t *rl.Texture2D, p *entities.Player) {
-	r.renderRoom(t)
-	r.renderPlayer(p)
+func (r *Render) Render(t *rl.Texture2D, p *entities.Player, ms []*entities.Mob) {
+	renderRoom(t)
+	renderMobs(ms)
+	renderPlayer(p)
 }
