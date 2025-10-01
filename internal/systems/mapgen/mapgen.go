@@ -1,18 +1,24 @@
 package mapgen
 
 import (
-	"fmt"
 	"math/rand"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/solarlune/dngn"
 
 	"github.com/diegoxter/7planet/internal/assets"
+	"github.com/diegoxter/7planet/internal/systems/entities"
 )
+
+type Room struct {
+	Data  *dngn.BSPRoom
+	Mobs  []*entities.Mob
+	Items []*entities.Item
+}
 
 type Map struct {
 	Layout        *dngn.Layout
-	Rooms         []*dngn.BSPRoom
+	Rooms         []*Room
 	StartingRoom  *dngn.BSPRoom
 	StartingPoint dngn.Position
 	Texture       *rl.Texture2D
@@ -23,7 +29,7 @@ func CreateMap(w, h, s int) *Map {
 
 	GameMap.Layout = dngn.NewLayout(w, h)
 
-	GameMap.Rooms = GameMap.Layout.GenerateBSP(
+	rooms := GameMap.Layout.GenerateBSP(
 		dngn.BSPOptions{
 			WallValue:       'x',
 			SplitCount:      s,
@@ -32,10 +38,31 @@ func CreateMap(w, h, s int) *Map {
 		},
 	)
 
-	GameMap.StartingRoom = GameMap.Rooms[rand.Intn(len(GameMap.Rooms))]
+	GameMap.StartingRoom = rooms[rand.Intn(len(rooms))]
 	GameMap.StartingPoint = GameMap.StartingRoom.Center()
 
-	fmt.Println(GameMap.Layout.DataToString())
+	for i, rR := range rooms {
+		rP := &Room{}
+
+		rP.Data = rR
+
+		mobs := []*entities.Mob{}
+		maxTries := 50 // o el número que quieras
+		tries := 0
+
+		for len(mobs) < 5 && tries < maxTries {
+			mob := entities.GenerateMob(1, rooms[i], GameMap.Layout)
+			if mob != nil {
+				mobs = append(mobs, mob)
+			}
+			tries++
+		}
+		rP.Mobs = mobs
+
+		GameMap.Rooms = append(GameMap.Rooms, rP)
+	}
+
+	// fmt.Println(GameMap.Layout.DataToString())
 
 	return &GameMap
 }

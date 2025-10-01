@@ -18,6 +18,9 @@ type Mob struct {
 
 func pickMobPerFloor(f int) string {
 	id := rand.Intn(f + (10 * f))
+	if id == 0 {
+		id = 1
+	}
 	return fmt.Sprintf("internal/assets/png/mobs/Icon%d.png", id)
 }
 

@@ -4,7 +4,6 @@ import (
 	"math"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/solarlune/dngn"
 
 	"github.com/diegoxter/7planet/internal/assets"
 	"github.com/diegoxter/7planet/internal/systems/entities"
@@ -12,16 +11,10 @@ import (
 	"github.com/diegoxter/7planet/internal/systems/render"
 )
 
-type MapData struct {
-	Map   *mapgen.Map
-	Mobs  []*entities.Mob
-	Items []*entities.Item
-}
-
 type Game struct {
 	Renderer *render.Render
 	W, H     int32
-	MapData  *MapData
+	Map      *mapgen.Map
 	Camera   *rl.Camera2D
 	Player   *entities.Player
 }
@@ -48,13 +41,6 @@ func Init(w, h int32) *Game {
 		return nil
 	}
 
-	mobs := []*entities.Mob{}
-	for len(mobs) < 5 {
-		mob := entities.GenerateMob(1, m.StartingRoom, m.Layout)
-		if mob != nil {
-			mobs = append(mobs, mob)
-		}
-	}
 	game := &Game{
 		W: w,
 		H: h,
@@ -66,11 +52,8 @@ func Init(w, h int32) *Game {
 			HP: 100,
 		},
 		Renderer: r,
-		MapData: &MapData{
-			Map:  m,
-			Mobs: mobs,
-		},
-		Camera: &rl.Camera2D{},
+		Map:      m,
+		Camera:   &rl.Camera2D{},
 	}
 
 	game.Camera.Target = rl.NewVector2(
@@ -94,9 +77,9 @@ func (g *Game) handleInput() {
 		g.Player.Move(
 			0.1,
 			0,
-			g.MapData.Map.Layout.Width,
-			g.MapData.Map.Layout.Height,
-			g.MapData.Map.Layout,
+			g.Map.Layout.Width,
+			g.Map.Layout.Height,
+			g.Map.Layout,
 		)
 	}
 	if rl.IsKeyDown(rl.KeyLeft) {
@@ -104,9 +87,9 @@ func (g *Game) handleInput() {
 		g.Player.Move(
 			-0.1,
 			0,
-			g.MapData.Map.Layout.Width,
-			g.MapData.Map.Layout.Height,
-			g.MapData.Map.Layout,
+			g.Map.Layout.Width,
+			g.Map.Layout.Height,
+			g.Map.Layout,
 		)
 	}
 	if rl.IsKeyDown(rl.KeyDown) {
@@ -114,9 +97,9 @@ func (g *Game) handleInput() {
 		g.Player.Move(
 			0,
 			0.1,
-			g.MapData.Map.Layout.Width,
-			g.MapData.Map.Layout.Height,
-			g.MapData.Map.Layout,
+			g.Map.Layout.Width,
+			g.Map.Layout.Height,
+			g.Map.Layout,
 		)
 	}
 
@@ -125,9 +108,9 @@ func (g *Game) handleInput() {
 		g.Player.Move(
 			0,
 			-0.1,
-			g.MapData.Map.Layout.Width,
-			g.MapData.Map.Layout.Height,
-			g.MapData.Map.Layout,
+			g.Map.Layout.Width,
+			g.Map.Layout.Height,
+			g.Map.Layout,
 		)
 	}
 
@@ -140,24 +123,33 @@ func (g *Game) handleInput() {
 func (g *Game) render() {
 	g.updateCameraForRoom()
 
-	g.Renderer.Render(g.MapData.Map.Texture, g.Player, g.MapData.Mobs)
+	r := g.currentRoom()
+	if r == nil {
+		g.Renderer.Render(g.Map.Texture, g.Player, nil)
+		return
+	}
+
+	g.Renderer.Render(g.Map.Texture, g.Player, r.Mobs)
 }
 
-func (g *Game) currentRoom() *dngn.BSPRoom {
-	t := g.MapData.Map.Layout.Get(
-		int(math.Ceil(float64(g.Player.Data.Position.X))),
+func (g *Game) currentRoom() *mapgen.Room {
+	var x int
+
+	x = int(math.Ceil(float64(g.Player.Data.Position.X - 0.15)))
+	t := g.Map.Layout.Get(
+		x,
 		int(math.Ceil(float64(g.Player.Data.Position.Y))),
 	)
-
+	// Necessary so the camera doesnt change when the player is near a door or wall
 	if t == 120 || t == 35 {
 		return nil
 	}
 
-	for _, r := range g.MapData.Map.Rooms {
-		if g.Player.Data.Position.X >= float32(r.X-1) &&
-			g.Player.Data.Position.X <= float32(r.X+r.W) &&
-			g.Player.Data.Position.Y >= float32(r.Y-1) &&
-			g.Player.Data.Position.Y <= float32(r.Y+r.H) {
+	for _, r := range g.Map.Rooms {
+		if g.Player.Data.Position.X >= float32(r.Data.X-1) &&
+			g.Player.Data.Position.X <= float32(r.Data.X+r.Data.W) &&
+			g.Player.Data.Position.Y >= float32(r.Data.Y-1) &&
+			g.Player.Data.Position.Y <= float32(r.Data.Y+r.Data.H) {
 			return r
 		}
 	}
@@ -172,8 +164,8 @@ func (g *Game) updateCameraForRoom() {
 	}
 
 	drawSize := float32(assets.DrawSize)
-	worldCenterX := (float32(room.X) + float32(room.W)/2) * drawSize
-	worldCenterY := (float32(room.Y) + float32(room.H)/2) * drawSize
+	worldCenterX := (float32(room.Data.X) + float32(room.Data.W)/2) * drawSize
+	worldCenterY := (float32(room.Data.Y) + float32(room.Data.H)/2) * drawSize
 
 	lerp := func(a, b, t float32) float32 { return a + (b-a)*t }
 	g.Camera.Target.X = lerp(g.Camera.Target.X, worldCenterX, 0.1)
@@ -181,8 +173,8 @@ func (g *Game) updateCameraForRoom() {
 
 	targetCoverage := float32(0.8)
 
-	zoomX := (float32(g.W) * targetCoverage) / (float32(room.W) * drawSize)
-	zoomY := (float32(g.H) * targetCoverage) / (float32(room.H) * drawSize)
+	zoomX := (float32(g.W) * targetCoverage) / (float32(room.Data.W) * drawSize)
+	zoomY := (float32(g.H) * targetCoverage) / (float32(room.Data.H) * drawSize)
 
 	zoom := min(zoomX, zoomY)
 	zoom = min(max(zoom, 0.3), 3.0)

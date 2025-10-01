@@ -14,7 +14,7 @@ type Player struct {
 func (p *Player) Move(dX, dY float32, maxX, maxY int, l *dngn.Layout) {
 	newX := p.Data.Position.X + dX
 	newY := p.Data.Position.Y + dY
-	const marginX = 0.28
+	const marginX = 0.08
 	const marginY = 0.48
 
 	var tileX, tileY int
