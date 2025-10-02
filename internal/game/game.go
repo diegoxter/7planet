@@ -77,8 +77,6 @@ func (g *Game) handleInput() {
 		g.Player.Move(
 			0.1,
 			0,
-			g.Map.Layout.Width,
-			g.Map.Layout.Height,
 			g.Map.Layout,
 		)
 	}
@@ -87,8 +85,6 @@ func (g *Game) handleInput() {
 		g.Player.Move(
 			-0.1,
 			0,
-			g.Map.Layout.Width,
-			g.Map.Layout.Height,
 			g.Map.Layout,
 		)
 	}
@@ -97,8 +93,6 @@ func (g *Game) handleInput() {
 		g.Player.Move(
 			0,
 			0.1,
-			g.Map.Layout.Width,
-			g.Map.Layout.Height,
 			g.Map.Layout,
 		)
 	}
@@ -108,8 +102,6 @@ func (g *Game) handleInput() {
 		g.Player.Move(
 			0,
 			-0.1,
-			g.Map.Layout.Width,
-			g.Map.Layout.Height,
 			g.Map.Layout,
 		)
 	}
@@ -146,7 +138,7 @@ func (g *Game) currentRoom() *mapgen.Room {
 	}
 
 	for _, r := range g.Map.Rooms {
-		if g.Player.Data.Position.X >= float32(r.Data.X-1) &&
+		if g.Player.Data.Position.X >= float32(float32(r.Data.X)+0.01) &&
 			g.Player.Data.Position.X <= float32(r.Data.X+r.Data.W) &&
 			g.Player.Data.Position.Y >= float32(r.Data.Y-1) &&
 			g.Player.Data.Position.Y <= float32(r.Data.Y+r.Data.H) {
@@ -183,8 +175,21 @@ func (g *Game) updateCameraForRoom() {
 	g.Camera.Offset = rl.NewVector2(float32(g.W)/2, float32(g.H)/2)
 }
 
+func (g *Game) updateMobs() {
+	r := g.currentRoom()
+	if r == nil {
+		return
+	}
+	for _, m := range r.Mobs {
+		maxX := int32(r.Data.W) * assets.DrawSize // O el factor de escala correcto
+		maxY := int32(r.Data.H) * assets.DrawSize
+
+		m.Update(int(maxX), int(maxY), g.Player.Data.Position, g.Map.Layout)
+	}
+}
+
 func (g *Game) Run() {
 	g.handleInput()
-
+	g.updateMobs()
 	g.render()
 }

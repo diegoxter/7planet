@@ -1,7 +1,10 @@
 package entities
 
 import (
+	"math"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
+	"github.com/solarlune/dngn"
 
 	"github.com/diegoxter/7planet/internal/assets"
 )
@@ -64,19 +67,53 @@ func NewSprite(p *rl.Texture2D, sC, sR float32, fS int) *Sprite {
 	}
 }
 
-func (e *Entity) Move(newX, newY float32, maxX, maxY int) {
+// entity.go
+func (e *Entity) Move(dX, dY float32, layout *dngn.Layout) bool {
 	e.Sprite.Moving = true
+	newX := e.Position.X + dX
+	newY := e.Position.Y + dY
 
-	margin := float32(-0.28)
-	leftOK := newX >= 0+margin
-	rightOK := newX <= float32(maxX-1)-margin
-	topOK := newY >= 0+margin
+	const marginX = 0.08
+	const marginY = 0.48
+
+	maxX := layout.Width
+	maxY := layout.Height
+	leftOK := newX >= 0+(-0.28)
+	rightOK := newX <= float32(maxX-1)-(-0.28)
+	topOK := newY >= 0+(-0.28)
 	bottomOK := newY <= float32(maxY-1)-(0.48)
+
+	var tileX, tileY int
+
+	if dX > 0 {
+		tileX = int(math.Ceil(float64(newX - marginX)))
+	} else if dX < 0 {
+		tileX = int(math.Floor(float64(newX + marginX)))
+	} else {
+		tileX = int(math.Round(float64(newX)))
+	}
+
+	if dY > 0 {
+		tileY = int(math.Ceil(float64(newY + 0.18)))
+	} else if dY < 0 {
+		tileY = int(math.Floor(float64(newY + marginY)))
+	} else {
+		tileY = int(math.Round(float64(newY)))
+	}
+
+	tile := layout.Get(tileX, tileY)
+
+	if tile == 120 { // 120 = 'x' (pared)
+		return false
+	}
 
 	if leftOK && rightOK && topOK && bottomOK {
 		e.Position.X = newX
 		e.Position.Y = newY
+		return true
 	}
+
+	return false
 }
 
 func (e *Entity) updateFrameCounter() {
